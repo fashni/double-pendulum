@@ -55,6 +55,9 @@ function Double_Pendulum_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for Double_Pendulum
 handles.output = hObject;
 
+handles.subplt = gobjects(1, 4);
+handles.plt = gobjects(0);
+
 % Disable buttons
 set(handles.save, 'Enable', 'off')
 set(handles.visualization, 'Enable', 'off')
@@ -62,6 +65,8 @@ set(handles.visualization, 'Enable', 'off')
 % Initialize variables
 handles.integrator = PendulumIntegrator();
 handles.vis_opt = 'sim';
+
+set(handles.status, 'String', 'SIAP')
 
 % Update handles structure
 guidata(hObject, handles);
@@ -95,10 +100,11 @@ function calculation_Callback(hObject, eventdata, handles)
 % hObject    handle to calculation (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+set(handles.status, 'String', 'MOHON TUNGGU')
 L = [str2double(get(handles.L1, 'String')) str2double(get(handles.L2, 'String'))];
 m = [str2double(get(handles.m1, 'String')) str2double(get(handles.m2, 'String'))];
-th = [str2double(get(handles.th1, 'String')) str2double(get(handles.th2, 'String'))];
-omg = [str2double(get(handles.omg1, 'String')) str2double(get(handles.omg2, 'String'))];
+th = [str2double(get(handles.th1, 'String')) str2double(get(handles.th2, 'String'))] * pi/180;
+omg = [str2double(get(handles.omg1, 'String')) str2double(get(handles.omg2, 'String'))] * pi/180;
 g = str2double(get(handles.grav, 'String'));
 steps = str2double(get(handles.nstep, 'String'));
 iter = str2double(get(handles.niter, 'String'));
@@ -106,10 +112,11 @@ iter = str2double(get(handles.niter, 'String'));
 handles.integrator.add_properties('GravAcc', g, 'Steps', steps, 'Iterations', iter, ...
     'Mass', m, 'Length', L, 'InitialTheta', th, 'InitialOmega', omg);
 
-% handles.integrator
+handles.integrator.runge_kutta();
 
 set(handles.visualization, 'Enable', 'on')
 set(handles.save, 'Enable', 'on')
+set(handles.status, 'String', 'SIAP')
 guidata(hObject, handles);
 
 
@@ -118,6 +125,53 @@ function visualization_Callback(hObject, eventdata, handles)
 % hObject    handle to visualization (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+delete(handles.plt)
+delete(handles.subplt)
+if strcmp(handles.vis_opt, 'time_graph')
+    t = 0:handles.integrator.steps:handles.integrator.steps*(handles.integrator.iterations-1);
+
+    handles.subplt(1) = subplot('Position', [0.03 0.5 0.45 0.45], 'Parent', handles.vis_panel);
+    plot(t, handles.integrator.th_data(1, :))
+    title('\theta_{1}')
+    grid on
+    ax = gca;
+    ax.XAxisLocation = 'origin';
+    ax.YAxisLocation = 'origin';
+    
+    handles.subplt(2) = subplot('Position', [0.53 0.5 0.45 0.45], 'Parent', handles.vis_panel);
+    plot(t, handles.integrator.th_data(2, :))
+    title('\theta_{2}')
+    grid on
+    ax = gca;
+    ax.XAxisLocation = 'origin';
+    ax.YAxisLocation = 'origin';
+    
+    handles.subplt(3) = subplot('Position', [0.03 0 0.45 0.45], 'Parent', handles.vis_panel);
+    plot(t, handles.integrator.w_data(1, :))
+    title('\omega_{1}')
+    grid on
+    ax = gca;
+    ax.XAxisLocation = 'origin';
+    ax.YAxisLocation = 'origin';
+    
+    handles.subplt(4) = subplot( 'Position', [0.53 0 0.45 0.45], 'Parent', handles.vis_panel);
+    plot(t, handles.integrator.w_data(2, :))
+    title('\omega_{2}')
+    grid on
+    ax = gca;
+    ax.XAxisLocation = 'origin';
+    ax.YAxisLocation = 'origin';
+
+elseif strcmp(handles.vis_opt, 'gen_coord')
+    handles.plt = subplot('Position', [0 0 1 1], 'Parent', handles.vis_panel);
+    plot(handles.integrator.th_data(1, :), handles.integrator.th_data(2, :))
+    xlabel('\theta_{1}')
+    ylabel('\theta_{2}')
+    grid on
+    handles.plt.XAxisLocation = 'origin';
+    handles.plt.YAxisLocation = 'origin';
+end
+guidata(hObject, handles);
 
 
 % --- Executes on button press in reset.
@@ -139,6 +193,8 @@ set(handles.omg2, 'String', 0);
 set(handles.grav, 'String', 9.8);
 set(handles.nstep, 'String', 0.1);
 set(handles.niter, 'String', 1000);
+delete(handles.subplt)
+delete(handles.plt)
 
 set(handles.visualization, 'Enable', 'off')
 set(handles.save, 'Enable', 'off')
@@ -173,10 +229,10 @@ set(handles.L1, 'String', num2str(pendulum.length(1)));
 set(handles.L2, 'String', num2str(pendulum.length(2)));
 set(handles.m1, 'String', num2str(pendulum.mass(1)));
 set(handles.m2, 'String', num2str(pendulum.mass(2)));
-set(handles.th1, 'String', num2str(pendulum.th_data(1, 1)));
-set(handles.th2, 'String', num2str(pendulum.th_data(2, 1)));
-set(handles.omg1, 'String', num2str(pendulum.w_data(1, 1)));
-set(handles.omg2, 'String', num2str(pendulum.w_data(2, 1)));
+set(handles.th1, 'String', num2str(pendulum.th_data(1, 1) * 180/pi));
+set(handles.th2, 'String', num2str(pendulum.th_data(2, 1) * 180/pi));
+set(handles.omg1, 'String', num2str(pendulum.w_data(1, 1) * 180/pi));
+set(handles.omg2, 'String', num2str(pendulum.w_data(2, 1) * 180/pi));
 set(handles.grav, 'String', num2str(pendulum.grav));
 set(handles.nstep, 'String', num2str(pendulum.steps));
 set(handles.niter, 'String', num2str(pendulum.iterations));

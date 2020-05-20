@@ -66,35 +66,55 @@ classdef PendulumIntegrator < handle
     end
 
 
-    function varargout = deriv(self, n)
-      dth1dt = self.w_data(1, n);
-      dth2dt = self.w_data(2, n);
-
-      den1 = self.length(1)*(2*self.mass(1) + self.mass(2) - self.mass(2)*cos(2*self.th_data(1, n)-2*self.th_data(2, n)));
-      den2 = (self.length(2)/self.length(1)) * den1;
-
-      dw1dt = (-self.grav*(2*self.mass(1)+self.mass(2))*sin(self.th_data(1, n)) ...
-              - self.mass(2)*self.grav*sin(self.th_data(1, n)-2*self.th_data(2, n)) ...
-              - 2*sin(self.th_data(1, n)-self.th_data(2, n))*self.mass(2) * ...
-              (self.w_data(2, n)^2*self.length(2) ...
-               + self.w_data(1, n)^2*self.length(1)*cos(self.th_data(1, n)-self.th_data(2, n)))) / den1;
-      dw2dt = (2*sin(self.th_data(1, n)-self.th_data(2, n)) * ...
-              (self.w_data(1, n)^2*self.length(1)*(self.mass(1)+self.mass(2)) ...
-              + self.grav*(self.mass(1)+self.mass(2))*cos(self.th_data(1, n)) ...
-              + self.w_data(2, n)^2*self.length(2)*self.mass(2)*cos(self.th_data(1, n)-self.th_data(2, n)))) / den2;
-
-      y = [dth1dt dw1dt dth2dt dw2dt];
-      if nargout > 4
-        return
-      end
-      for k = 1:nargout
-        varargout{k} = y(k);
-      end
-    end
-    
-
     function runge_kutta(self)
-      
+      g = self.grav;
+      m1 = self.mass(1);
+      m2 = self.mass(2);
+      M = sum(self.mass);
+      L1 = self.length(1);
+      L2 = self.length(2);
+      h = self.steps;
+      hh = 0.5*h;
+
+      dth1 = @(th1, th2, w1, w2) w1;
+      dth2 = @(th1, th2, w1, w2) w2;
+      dw1 = @(th1, th2, w1, w2) (-g*(M+m1)*sin(th1) - m2*g*sin(th1-2*th2) - 2*sin(th1-th2) * m2*(w1^2*L1*cos(th1-th2)+w2^2*L2)) / (L1*(M+m1-m2*cos(2*th1-2*th2)));
+      dw2 = @(th1, th2, w1, w2) (2*sin(th1-th2) * (M*w1^2*L1 + g*M*cos(th1) + w2^2*L2*m2*cos(th1-th2))) / (L2*(M+m1-m2*cos(2*th1-2*th2)));
+
+      f = {dth1 dth2 dw1 dw2};
+
+      y = zeros(4, self.iterations);
+      A = zeros(4);
+      B = zeros(4);
+      C = zeros(4);
+      D = zeros(4);
+
+      y(1, 1) = self.th_data(1, 1);
+      y(2, 1) = self.th_data(2, 1);
+      y(3, 1) = self.w_data(1, 1);
+      y(4, 1) = self.w_data(2, 1);
+
+      for k = 2:self.iterations
+        for p = 1:4
+          A(p) = f{p}(y(1, k-1), y(2, k-1), y(3, k-1), y(4, k-1));
+        end
+        for p = 1:4
+          B(p) = f{p}(y(1, k-1)+hh*A(1), y(2, k-1)+hh*A(2), y(3, k-1)+hh*A(3), y(4, k-1)+hh*A(4));
+        end
+        for p = 1:4
+          C(p) = f{p}(y(1, k-1)+hh*B(1), y(2, k-1)+hh*B(2), y(3, k-1)+hh*B(3), y(4, k-1)+hh*B(4));
+        end
+        for p = 1:4
+          D(p) = f{p}(y(1, k-1)+h*C(1), y(2, k-1)+h*C(2), y(3, k-1)+h*C(3), y(4, k-1)+h*C(4));
+        end
+
+        for p = 1:4
+          y(p, k) = y(p, k-1) + (h/6)*(A(p) + 2*B(p) + 2*C(p) + D(p));
+        end
+      end
+
+      self.th_data = y(1:2, :);
+      self.w_data = y(3:4, :);
     end
 
   end
