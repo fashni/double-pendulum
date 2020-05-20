@@ -22,7 +22,7 @@ function varargout = Double_Pendulum(varargin)
 
 % Edit the above text to modify the response to help Double_Pendulum
 
-% Last Modified by GUIDE v2.5 19-May-2020 17:17:14
+% Last Modified by GUIDE v2.5 20-May-2020 09:03:08
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -55,6 +55,14 @@ function Double_Pendulum_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for Double_Pendulum
 handles.output = hObject;
 
+% Disable buttons
+set(handles.save, 'Enable', 'off')
+set(handles.visualization, 'Enable', 'off')
+
+% Initialize variables
+handles.integrator = PendulumIntegrator();
+handles.vis_opt = 'sim';
+
 % Update handles structure
 guidata(hObject, handles);
 
@@ -73,11 +81,36 @@ function varargout = Double_Pendulum_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 
+% --- Executes when selected object is changed in vis_opts.
+function vis_opts_SelectionChangedFcn(hObject, eventdata, handles)
+% hObject    handle to the selected object in vis_opts 
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.vis_opt = get(eventdata.NewValue,'Tag');
+guidata(hObject, handles);
+
+
 % --- Executes on button press in calculation.
 function calculation_Callback(hObject, eventdata, handles)
 % hObject    handle to calculation (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+L = [str2double(get(handles.L1, 'String')) str2double(get(handles.L2, 'String'))];
+m = [str2double(get(handles.m1, 'String')) str2double(get(handles.m2, 'String'))];
+th = [str2double(get(handles.th1, 'String')) str2double(get(handles.th2, 'String'))];
+omg = [str2double(get(handles.omg1, 'String')) str2double(get(handles.omg2, 'String'))];
+g = str2double(get(handles.grav, 'String'));
+steps = str2double(get(handles.nstep, 'String'));
+iter = str2double(get(handles.niter, 'String'));
+
+handles.integrator.add_properties('GravAcc', g, 'Steps', steps, 'Iterations', iter, ...
+    'Mass', m, 'Length', L, 'InitialTheta', th, 'InitialOmega', omg);
+
+% handles.integrator
+
+set(handles.visualization, 'Enable', 'on')
+set(handles.save, 'Enable', 'on')
+guidata(hObject, handles);
 
 
 % --- Executes on button press in visualization.
@@ -92,6 +125,74 @@ function reset_Callback(hObject, eventdata, handles)
 % hObject    handle to reset (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+handles.integrator.clear_properties();
+handles.vis_opt = 'sim';
+set(handles.vis_opts, 'selectedobject', handles.sim);
+set(handles.L1, 'String', 1);
+set(handles.L2, 'String', 1);
+set(handles.m1, 'String', 1);
+set(handles.m2, 'String', 1);
+set(handles.th1, 'String', 0);
+set(handles.th2, 'String', 0);
+set(handles.omg1, 'String', 0);
+set(handles.omg2, 'String', 0);
+set(handles.grav, 'String', 9.8);
+set(handles.nstep, 'String', 0.1);
+set(handles.niter, 'String', 1000);
+
+set(handles.visualization, 'Enable', 'off')
+set(handles.save, 'Enable', 'off')
+guidata(hObject, handles);
+
+
+% --- Executes on button press in save.
+function save_Callback(hObject, eventdata, handles)
+    % hObject    handle to save (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[filename, pathname] = uiputfile('saved\*.mat', 'Save as...');
+if pathname==0
+    return
+end
+pendulum = handles.integrator;
+save([pathname filename], 'pendulum')
+
+
+% --- Executes on button press in load.
+function load_Callback(hObject, eventdata, handles)
+% hObject    handle to load (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[filename, pathname] = uigetfile('saved\*.mat', 'Select a file');
+if pathname==0
+    return
+end
+load([pathname filename], 'pendulum')
+handles.integrator = pendulum;
+set(handles.L1, 'String', num2str(pendulum.length(1)));
+set(handles.L2, 'String', num2str(pendulum.length(2)));
+set(handles.m1, 'String', num2str(pendulum.mass(1)));
+set(handles.m2, 'String', num2str(pendulum.mass(2)));
+set(handles.th1, 'String', num2str(pendulum.th_data(1, 1)));
+set(handles.th2, 'String', num2str(pendulum.th_data(2, 1)));
+set(handles.omg1, 'String', num2str(pendulum.w_data(1, 1)));
+set(handles.omg2, 'String', num2str(pendulum.w_data(2, 1)));
+set(handles.grav, 'String', num2str(pendulum.grav));
+set(handles.nstep, 'String', num2str(pendulum.steps));
+set(handles.niter, 'String', num2str(pendulum.iterations));
+
+set(handles.visualization, 'Enable', 'on')
+set(handles.save, 'Enable', 'on')
+guidata(hObject, handles);
+
+
+% --- Executes on button press in show_data.
+function show_data_Callback(hObject, eventdata, handles)
+% hObject    handle to show_data (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of show_data
 
 
 % --- Executes on button press in sim.
@@ -372,26 +473,3 @@ function m2_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
-
-% --- Executes on button press in save.
-function save_Callback(hObject, eventdata, handles)
-% hObject    handle to save (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes on button press in load.
-function load_Callback(hObject, eventdata, handles)
-% hObject    handle to load (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes on button press in show_data.
-function show_data_Callback(hObject, eventdata, handles)
-% hObject    handle to show_data (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of show_data

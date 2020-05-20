@@ -11,26 +11,58 @@ classdef PendulumIntegrator < handle
 
 
   methods
-    function self = PendulumIntegrator(grav, steps, iterations)
-      self.grav = grav;
-      self.steps = steps;
-      self.iterations = iterations;
-      self.th_data = zeros(2, iterations);
-      self.w_data = zeros(2, iterations);
+    function self = PendulumIntegrator(varargin)
+      self.add_properties(varargin{:});
     end
 
 
-    function add_properties(self, mass, len, th_init, w_init)
-      if any(size(mass) ~= [1, 2]) || ... 
-         all(size(len) ~= [1, 2]) || ...
-         any(size(th_init) ~= [1, 2]) || ...
-         any(size(w_init) ~= [1, 2])
-        return
+    function add_properties(self, varargin)
+      p = inputParser;
+      valid_size = @(x) validateattributes(x,{'numeric'},{'size', [1 2]});
+      valid_param = @(x) isscalar(x) && isnumeric(x) && x>0;
+      addParameter(p, 'GravAcc', [], valid_param);
+      addParameter(p, 'Steps', [], valid_param);
+      addParameter(p, 'Iterations', [], valid_param);
+      addParameter(p, 'Mass', [], valid_size);
+      addParameter(p, 'Length', [], valid_size);
+      addParameter(p, 'InitialTheta', [], valid_size);
+      addParameter(p, 'InitialOmega', [], valid_size);
+      parse(p, varargin{:})
+
+      if ~any(find(strcmp(p.UsingDefaults, 'GravAcc')))
+        self.grav = p.Results.GravAcc;
       end
-      self.mass = mass;
-      self.length = len;
-      self.th_data(:, 1) = th_init';
-      self.w_data(:, 1) = w_init';
+      if ~any(find(strcmp(p.UsingDefaults, 'Steps')))
+        self.steps = p.Results.Steps;
+      end
+      if ~any(find(strcmp(p.UsingDefaults, 'Iterations')))
+        self.iterations = p.Results.Iterations;
+        self.th_data = zeros(2, self.iterations);
+        self.w_data = zeros(2, self.iterations);
+      end
+      if ~any(find(strcmp(p.UsingDefaults, 'Mass')))
+        self.mass = p.Results.Mass;
+      end
+      if ~any(find(strcmp(p.UsingDefaults, 'Length')))
+        self.length = p.Results.Length;
+      end
+      if ~any(find(strcmp(p.UsingDefaults, 'InitialTheta')))
+        self.th_data(:, 1) = p.Results.InitialTheta';
+      end
+      if ~any(find(strcmp(p.UsingDefaults, 'InitialOmega')))
+        self.w_data(:, 1) = p.Results.InitialOmega';
+      end
+    end
+
+
+    function clear_properties(self)
+      self.grav = [];
+      self.steps = [];
+      self.iterations = [];
+      self.mass = [];
+      self.length = [];
+      self.th_data = [];
+      self.w_data = [];
     end
 
 
