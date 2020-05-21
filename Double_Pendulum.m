@@ -188,10 +188,10 @@ else
     x2 = cartesian(3, :);
     y2 = cartesian(4, :);
 
-    handles.plt = subplot('Position', [0 0 1 1], 'Parent', handles.vis_panel);
-    set(gca, 'XLim', [-sum(handles.integrator.length)-0.5 sum(handles.integrator.length)+0.5], ... 
-             'YLim', [-sum(handles.integrator.length)-0.5 sum(handles.integrator.length)+0.5]);
-             tic
+    handles.plt = subplot('Position', [0.055 0.055 0.945 0.945], 'Parent', handles.vis_panel);
+    set(gca, 'XLim', [-sum(handles.integrator.length)*1.2 sum(handles.integrator.length)*1.2], ... 
+            'YLim', [-sum(handles.integrator.length)*1.2 sum(handles.integrator.length)*1.2]);
+    tic
     hold on
     for k=1:15:handles.integrator.iterations
         string1 = line([0 x1(k)], [0 y1(k)]);
@@ -242,6 +242,8 @@ delete(handles.plt)
 
 set(handles.visualization, 'Enable', 'off')
 set(handles.save, 'Enable', 'off')
+set(handles.calculation, 'Enable', 'on')
+set(handles.load, 'Enable', 'on')
 guidata(hObject, handles);
 
 
