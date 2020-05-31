@@ -7,6 +7,7 @@ classdef PendulumIntegrator < handle
     length
     th_data
     w_data
+    th_analytic
   end
 
 
@@ -63,6 +64,7 @@ classdef PendulumIntegrator < handle
       self.length = [];
       self.th_data = [];
       self.w_data = [];
+      self.th_analytic = [];
     end
 
 
@@ -178,16 +180,31 @@ classdef PendulumIntegrator < handle
       self.w_data = y(1:2, :); % w1 dan w2
       self.th_data = wrapToPi(y(3:4, :)); % th1 dan th2
     end
+    
+    
+    function analytic(self)
+      % BEGIN ANALYTIC METHOD
+      
+      % END ANALYTIC METHOD
+    end
 
 
     function output = get_cartesian(self)
       x1 = self.length(1) * sin(self.th_data(1, :));
       y1 = -self.length(1) * cos(self.th_data(1, :));
-
       x2 = x1 + self.length(2) * sin(self.th_data(2, :));
       y2 = y1 - self.length(2) * cos(self.th_data(2, :));
 
-      output = [x1; y1; x2; y2];
+      if ~isempty(self.th_analytic)
+        x1_a = self.length(1) * sin(self.th_analytic(1, :));
+        y1_a = -self.length(1) * cos(self.th_analytic(1, :));
+        x2_a = x1_a + self.length(2) * sin(self.th_analytic(2, :));
+        y2_a = y1_a - self.length(2) * cos(self.th_analytic(2, :));
+      else
+        [x1_a, y1_a, x2_a, y2_a] = deal([]);
+      end
+
+      output = [x1; y1; x2; y2; x1_a; y1_a; x2_a; y2_a];
     end
   end
 end

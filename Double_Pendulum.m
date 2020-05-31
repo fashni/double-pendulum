@@ -22,7 +22,7 @@ function varargout = Double_Pendulum(varargin)
 
 % Edit the above text to modify the response to help Double_Pendulum
 
-% Last Modified by GUIDE v2.5 22-May-2020 23:16:07
+% Last Modified by GUIDE v2.5 23-May-2020 20:46:25
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -62,7 +62,7 @@ set(handles.nstep, 'String', 0.005);
 set(handles.niter, 'String', 2000);
 
 % Initialize variables
-handles.subplt = gobjects(1, 4);
+handles.subplt = gobjects(1, 2);
 handles.plt = gobjects(0);
 handles.integrator = PendulumIntegrator();
 handles.vis_opt = 'sim';
@@ -70,6 +70,7 @@ handles.method = 'runge_kutta';
 
 set(handles.status, 'String', 'SIAP')
 set(handles.analytic, 'Enable', 'off')
+set(handles.show_analytic, 'Enable', 'off')
 
 % Update handles structure
 guidata(hObject, handles);
@@ -119,6 +120,21 @@ function calculation_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 set(handles.status, 'String', 'MOHON TUNGGU')
+set(handles.calculation, 'Enable', 'off')
+set(handles.visualization, 'Enable', 'off')
+set(handles.stop_btn, 'Enable', 'off')
+set(handles.reset, 'Enable', 'off')
+set(handles.save, 'Enable', 'off')
+set(handles.load, 'Enable', 'off')
+set(handles.sim, 'Enable', 'off')
+set(handles.gen_coord, 'Enable', 'off')
+set(handles.time_graph, 'Enable', 'off')
+set(handles.show_data, 'Enable', 'off')
+set(handles.show_analytic, 'Enable', 'off')
+set(handles.analytic, 'Enable', 'off')
+set(handles.show_analytic, 'Value', 0)
+pause(0.1)
+handles.integrator.clear_properties()
 L = [str2double(get(handles.L1, 'String')) str2double(get(handles.L2, 'String'))];
 m = [str2double(get(handles.m1, 'String')) str2double(get(handles.m2, 'String'))];
 th = [str2double(get(handles.th1, 'String')) str2double(get(handles.th2, 'String'))] * pi/180;
@@ -139,8 +155,19 @@ case 'symplectic_euler'
     handles.integrator.symplectic_euler();
 end
 
+if all(abs(th*180/pi) <= 10) && abs(th(1)-th(2))*180/pi <= 10 && L(1) == L(2)
+    set(handles.analytic, 'Enable', 'on')
+end
 set(handles.visualization, 'Enable', 'on')
 set(handles.save, 'Enable', 'on')
+set(handles.calculation, 'Enable', 'on')
+set(handles.load, 'Enable', 'on')
+set(handles.stop_btn, 'Enable', 'on')
+set(handles.reset, 'Enable', 'on')
+set(handles.sim, 'Enable', 'on')
+set(handles.gen_coord, 'Enable', 'on')
+set(handles.time_graph, 'Enable', 'on')
+set(handles.show_data, 'Enable', 'on')
 set(handles.status, 'String', 'HITUNG DATA SELESAI')
 guidata(hObject, handles);
 
@@ -160,6 +187,7 @@ set(handles.load, 'Enable', 'off')
 set(handles.sim, 'Enable', 'off')
 set(handles.time_graph, 'Enable', 'off')
 set(handles.gen_coord, 'Enable', 'off')
+set(handles.show_analytic, 'Enable', 'off')
 
 set(handles.th1_str, 'String', 0)
 set(handles.th2_str, 'String', 0)
@@ -172,6 +200,7 @@ th1 = handles.integrator.th_data(1, :) * 180/pi;
 th2 = handles.integrator.th_data(2, :) * 180/pi;
 w1 = handles.integrator.w_data(1, :) * 180/pi;
 w2 = handles.integrator.w_data(2, :) * 180/pi;
+th_analytic = handles.integrator.th_analytic * 180/pi;
 
 switch handles.vis_opt
 case 'time_graph'
@@ -183,11 +212,17 @@ case 'time_graph'
     ax = gca;
     ax.XAxisLocation = 'origin';
     ax.YAxisLocation = 'origin';
-    
-    handles.subplt(3) = subplot('Position', [0.07 0 0.93 0.45], 'Parent', handles.vis_panel);
-    plot(t, w1, t, w2, 'LineWidth', 1.5)
-    title('\omega')
-    legend('\omega_{1}', '\omega_{2}')
+
+    handles.subplt(2) = subplot('Position', [0.07 0 0.93 0.45], 'Parent', handles.vis_panel);
+    if get(handles.show_analytic, 'Value')
+        plot(t, th_analytic(1, :), t, th_analytic(2, :), 'LineWidth', 1.5)
+        title('\theta Analitik')
+        legend('\theta_{1}', '\theta_{2}')
+    else
+        plot(t, w1, t, w2, 'LineWidth', 1.5)
+        title('\omega')
+        legend('\omega_{1}', '\omega_{2}')
+    end
     grid on
     ax = gca;
     ax.XAxisLocation = 'origin';
@@ -231,17 +266,30 @@ case 'sim'
     y1 = cartesian(2, :);
     x2 = cartesian(3, :);
     y2 = cartesian(4, :);
-    
+    if get(handles.show_analytic, 'Value')
+        x1_a = cartesian(5, :);
+        y1_a = cartesian(6, :);
+        x2_a = cartesian(7, :);
+        y2_a = cartesian(8, :);
+    end
+
     handles.plt = subplot('Position', [0.055 0.055 0.945 0.945], 'Parent', handles.vis_panel);
     set(gca, 'XLim', [-sum(handles.integrator.length)*1.2 sum(handles.integrator.length)*1.2], ... 
             'YLim', [-sum(handles.integrator.length)*1.2 sum(handles.integrator.length)*1.2]);
     tic
     hold on
     for k=1:freq:handles.integrator.iterations
-        head1 = scatter(x1(k), y1(k), 50, 'filled', 'MarkerFaceColor', 'b', 'MarkerEdgeColor', 'k');
-        head2 = scatter(x2(k), y2(k), 50, 'filled', 'MarkerFaceColor', 'r', 'MarkerEdgeColor', 'k');
-        string1 = line([0 x1(k)], [0 y1(k)]);
-        string2 = line([x1(k) x2(k)], [y1(k) y2(k)]);
+        string1 = line([0 x1(k)], [0 y1(k)], 'LineWidth', 1.5, 'Color', '#A2142F');
+        string2 = line([x1(k) x2(k)], [y1(k) y2(k)], 'LineWidth', 1.5, 'Color', '#A2142F');
+        head1 = scatter(x1(k), y1(k), 70, 'filled', 'MarkerFaceColor', 	'#77AC30', 'MarkerEdgeColor', 'k');
+        head2 = scatter(x2(k), y2(k), 70, 'filled', 'MarkerFaceColor', '#7E2F8E', 'MarkerEdgeColor', 'k');
+        if get(handles.show_analytic, 'Value')
+            string1_a = line([0 x1_a(k)], [0 y1_a(k)], 'LineStyle', '--', 'LineWidth', 1.5, 'Color', 'k');
+            string2_a = line([x1_a(k) x2_a(k)], [y1_a(k) y2_a(k)], 'LineStyle', '--', 'LineWidth', 1.5, 'Color', 'k');
+            head1_a = scatter(x1_a(k), y1_a(k), 50, 'filled', 'MarkerFaceColor', 'm', 'MarkerEdgeColor', 'k');
+            head2_a = scatter(x2_a(k), y2_a(k), 50, 'filled', 'MarkerFaceColor', 'c', 'MarkerEdgeColor', 'k');
+        end
+
         drawnow();
         set(handles.time_str, 'String', num2str((k-1)*handles.integrator.steps, '%.4f'))
         if get(handles.show_data, 'Value')
@@ -258,6 +306,12 @@ case 'sim'
             delete(head2);
             delete(string1);
             delete(string2);
+            if get(handles.show_analytic, 'Value')
+                delete(head1_a);
+                delete(head2_a);
+                delete(string1_a);
+                delete(string2_a);
+            end
         end
     end
     hold off
@@ -272,6 +326,9 @@ set(handles.load, 'Enable', 'on')
 set(handles.sim, 'Enable', 'on')
 set(handles.time_graph, 'Enable', 'on')
 set(handles.gen_coord, 'Enable', 'on')
+if ~isempty(th_analytic)
+    set(handles.show_analytic, 'Enable', 'on')
+end
 guidata(hObject, handles);
 
 
@@ -320,6 +377,9 @@ set(handles.load, 'Enable', 'on')
 set(handles.sim, 'Enable', 'on')
 set(handles.time_graph, 'Enable', 'on')
 set(handles.gen_coord, 'Enable', 'on')
+set(handles.show_analytic, 'Enable', 'off')
+set(handles.show_analytic, 'Value', 0)
+set(handles.analytic, 'Enable', 'off')
 guidata(hObject, handles);
 
 
@@ -364,6 +424,18 @@ set(handles.omg2, 'String', num2str(pendulum.w_data(2, 1) * 180/pi));
 set(handles.grav, 'String', num2str(pendulum.grav));
 set(handles.nstep, 'String', num2str(pendulum.steps));
 set(handles.niter, 'String', num2str(pendulum.iterations));
+if all(abs(pendulum.th_data(:, 1)*180/pi) <= 10) && ... 
+   abs(pendulum.th_data(1, 1)-pendulum.th_data(1, 2))*180/pi <= 10 && ...
+   pendulum.length(1) == pendulum.length(2)
+    set(handles.analytic, 'Enable', 'on')
+else
+    set(handles.analytic, 'Enable', 'off')
+end
+if ~isempty(pendulum.th_analytic)
+    set(handles.show_analytic, 'Enable', 'on')
+else
+    set(handles.show_analytic, 'Enable', 'off')
+end
 handles.method = method;
 switch handles.method
 case 'runge_kutta'
@@ -385,6 +457,8 @@ function analytic_Callback(hObject, eventdata, handles)
 % hObject    handle to analytic (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+handles.integrator.analytic()
+set(handles.show_analytic, 'Enable', 'on')
 
 
 % --- Executes on button press in show_data.
@@ -697,3 +771,12 @@ function freq_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in show_analytic.
+function show_analytic_Callback(hObject, eventdata, handles)
+% hObject    handle to show_analytic (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of show_analytic
