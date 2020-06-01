@@ -189,10 +189,12 @@ set(handles.time_graph, 'Enable', 'off')
 set(handles.gen_coord, 'Enable', 'off')
 set(handles.show_analytic, 'Enable', 'off')
 
+set(handles.time_str, 'String', 0)
 set(handles.th1_str, 'String', 0)
 set(handles.th2_str, 'String', 0)
 set(handles.w1_str, 'String', 0)
 set(handles.w2_str, 'String', 0)
+set(handles.err_str, 'String', 0)
 
 freq = str2double(get(handles.freq, 'String'));
 t = 0:handles.integrator.steps:handles.integrator.steps*(handles.integrator.iterations-1);
@@ -201,6 +203,9 @@ th2 = handles.integrator.th_data(2, :) * 180/pi;
 w1 = handles.integrator.w_data(1, :) * 180/pi;
 w2 = handles.integrator.w_data(2, :) * 180/pi;
 th_analytic = handles.integrator.th_analytic * 180/pi;
+if ~isempty(th_analytic)
+    dev = abs(([th1; th2] - th_analytic));
+end
 
 switch handles.vis_opt
 case 'time_graph'
@@ -218,6 +223,7 @@ case 'time_graph'
         plot(t, th_analytic(1, :), t, th_analytic(2, :), 'LineWidth', 1.5)
         title('\theta Analitik')
         legend('\theta_{1}', '\theta_{2}')
+        set(handles.err_str, 'String', num2str(max(dev, [], 'all'), '%.4f'))
     else
         plot(t, w1, t, w2, 'LineWidth', 1.5)
         title('\omega')
@@ -297,6 +303,9 @@ case 'sim'
             set(handles.th2_str, 'String', num2str(th2(k), '%.4f'))
             set(handles.w1_str, 'String', num2str(w1(k), '%.4f'))
             set(handles.w2_str, 'String', num2str(w2(k), '%.4f'))
+            if get(handles.show_analytic, 'Value')
+                set(handles.err_str, 'String', num2str(dev(k), '%.4f'))
+            end
         end
         if get(handles.stop_btn, 'UserData')
             break
@@ -367,6 +376,7 @@ set(handles.th1_str, 'String', 0)
 set(handles.th2_str, 'String', 0)
 set(handles.w1_str, 'String', 0)
 set(handles.w2_str, 'String', 0)
+set(handles.err_str, 'String', 0)
 delete(handles.subplt)
 delete(handles.plt)
 
