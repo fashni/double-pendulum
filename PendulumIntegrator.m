@@ -13,7 +13,9 @@ classdef PendulumIntegrator < handle
 
   methods
     function self = PendulumIntegrator(varargin)
-      self.add_properties(varargin{:});
+      if ~isempty(varargin)
+        self.add_properties(varargin{:});
+      end
     end
 
 
@@ -187,7 +189,20 @@ classdef PendulumIntegrator < handle
 
     function analytic(self)
       % BEGIN ANALYTIC METHOD
+      g = self.grav;
+      L = self.length(1);
+      mu = self.mass(2)/self.mass(1);
+      w = sqrt(g/L) * [sqrt(1+mu + sqrt((1+mu)*mu)); sqrt(1+mu - sqrt((1+mu)*mu))];
 
+      th0 = self.th_data(:, 1);
+      v = self.w_data(:, 1);
+      k = [cos(v)'; [-sqrt((1+mu)/mu) sqrt((1+mu)/mu)].*cos(v)'];
+      C = k\th0;
+
+      t = 0:self.steps:self.steps*(self.iterations-1);
+      th = @(t) [1; -sqrt((1+mu)/mu)] * C(1)*cos(w(1)*t+v(1)) + [1; sqrt((1+mu)/mu)] * C(2)*cos(w(2)*t+v(2));
+
+      self.th_analytic = th(t);
       % END ANALYTIC METHOD
     end
 
