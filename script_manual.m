@@ -1,16 +1,21 @@
 pendulum = PendulumIntegrator();
 
 g = 9.8;
-m = [1 1];
-L = [1 1];
-th_0 = [pi/6 0];
-w_0 = [0 0];
+m = [1; 1];
+L = [1; 1];
+th_0 = [pi/6; 0];
+w_0 = [0; 0];
 h = 0.005;
 iterasi = 2000;
 freq = 20;
 
-pendulum.add_properties('GravAcc', g, 'Steps', h, 'Iterations', iterasi, ...
-'Mass', m, 'Length', L, 'InitialTheta', th_0, 'InitialOmega', w_0);
+pendulum.grav = g;
+pendulum.steps = h;
+pendulum.iterations = iterasi;
+pendulum.mass = m;
+pendulum.length = L;
+pendulum.th_data(:, 1) = th_0;
+pendulum.w_data(:, 1) = w_0;
 
 pendulum.runge_kutta();
 % pendulum.euler();
@@ -30,10 +35,10 @@ set(gca, 'XLim', [-sum(pendulum.length)*1.2 sum(pendulum.length)*1.2], ...
          'YLim', [-sum(pendulum.length)*1.2 sum(pendulum.length)*1.2]);
 hold on
 for k=1:freq:pendulum.iterations
-  string1 = line([0 x1(k)], [0 y1(k)], 'LineWidth', 1.5, 'Color', '#A2142F');
-  string2 = line([x1(k) x2(k)], [y1(k) y2(k)], 'LineWidth', 1.5, 'Color', '#A2142F');
-  head1 = scatter(x1(k), y1(k), 70, 'filled', 'MarkerFaceColor', 	'#77AC30', 'MarkerEdgeColor', 'k');
-  head2 = scatter(x2(k), y2(k), 70, 'filled', 'MarkerFaceColor', '#7E2F8E', 'MarkerEdgeColor', 'k');
+  string1 = line([0 x1(k)], [0 y1(k)], 'LineWidth', 1.5);
+  string2 = line([x1(k) x2(k)], [y1(k) y2(k)], 'LineWidth', 1.5);
+  head1 = scatter(x1(k), y1(k), 70, 'filled', 'MarkerFaceColor', 	'r', 'MarkerEdgeColor', 'k');
+  head2 = scatter(x2(k), y2(k), 70, 'filled', 'MarkerFaceColor', 'b', 'MarkerEdgeColor', 'k');
   drawnow();
   if k+freq <= pendulum.iterations
     delete(head1);
