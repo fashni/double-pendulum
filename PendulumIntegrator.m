@@ -69,16 +69,18 @@ classdef PendulumIntegrator < handle
 
 
     function output = diff_eqs(self)
-      g = self.grav;
-      m1 = self.mass(1);
-      m2 = self.mass(2);
-      M = sum(self.mass);
-      L1 = self.length(1);
-      L2 = self.length(2);
+      g = self.grav; % perc. gravitasi
+      m1 = self.mass(1); % massa 1
+      m2 = self.mass(2); % massa 2
+      M = sum(self.mass); % massa 1 + massa 2
+      L1 = self.length(1); % panjang tali 1
+      L2 = self.length(2); % panjang tali 2
 
-      dth1 = @(w1, w2, th1, th2) w1;
-      dth2 = @(w1, w2, th1, th2) w2;
+      dth1 = @(w1, w2, th1, th2) w1; % dth1/dt
+      dth2 = @(w1, w2, th1, th2) w2; % dth2/dt
+      % dw1/dt
       dw1 = @(w1, w2, th1, th2) (-g*(M+m1)*sin(th1) - m2*g*sin(th1-2*th2) - 2*sin(th1-th2) * m2*(w1^2*L1*cos(th1-th2)+w2^2*L2)) / (L1*(M+m1-m2*cos(2*th1-2*th2)));
+      % dw2/dt
       dw2 = @(w1, w2, th1, th2) (2*sin(th1-th2) * (M*w1^2*L1 + g*M*cos(th1) + w2^2*L2*m2*cos(th1-th2))) / (L2*(M+m1-m2*cos(2*th1-2*th2)));
 
       output = {dw1 dw2 dth1 dth2};
@@ -165,23 +167,24 @@ classdef PendulumIntegrator < handle
       f = self.diff_eqs(); % persamaan differensial
 
       % Inisiasi matriks dengan nol
-      y = zeros(4, self.iterations);
+      w = zeros(2, self.iterations);
+      th = zeros(2, self.iterations);
 
       % Memasukkan kondisi awal sistem
-      y(1, 1) = self.w_data(1, 1); % w1
-      y(2, 1) = self.w_data(2, 1); % w2
-      y(3, 1) = self.th_data(1, 1); % th1
-      y(4, 1) = self.th_data(2, 1); % th2
+      w(1, 1) = self.w_data(1, 1); % w1
+      w(2, 1) = self.w_data(2, 1); % w2
+      th(1, 1) = self.th_data(1, 1); % th1
+      th(2, 1) = self.th_data(2, 1); % th2
       
       % BEGIN SYMPLECTIC EULER METHOD
 
       % END SYMPLECTIC EULER METHOD
 
-      self.w_data = y(1:2, :); % w1 dan w2
-      self.th_data = wrapToPi(y(3:4, :)); % th1 dan th2
+      self.w_data = w; % w1 dan w2
+      self.th_data = wrapToPi(th); % th1 dan th2
     end
-    
-    
+
+
     function analytic(self)
       % BEGIN ANALYTIC METHOD
       
