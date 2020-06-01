@@ -106,30 +106,30 @@ classdef PendulumIntegrator < handle
       y(4, 1) = self.th_data(2, 1); % th2
 
       % BEGIN RUNGE-KUTTA METHOD
-      for k = 2:self.iterations
+      for k = 1:self.iterations-1
         % Orde pertama
         for p = 1:4
-          A(p) = f{p}(y(1, k-1), y(2, k-1), y(3, k-1), y(4, k-1));
+          A(p) = f{p}(y(1, k), y(2, k), y(3, k), y(4, k));
         end
 
         % Orde kedua
         for p = 1:4
-          B(p) = f{p}(y(1, k-1)+hh*A(1), y(2, k-1)+hh*A(2), y(3, k-1)+hh*A(3), y(4, k-1)+hh*A(4));
+          B(p) = f{p}(y(1, k)+hh*A(1), y(2, k)+hh*A(2), y(3, k)+hh*A(3), y(4, k)+hh*A(4));
         end
 
         % Orde ketiga
         for p = 1:4
-          C(p) = f{p}(y(1, k-1)+hh*B(1), y(2, k-1)+hh*B(2), y(3, k-1)+hh*B(3), y(4, k-1)+hh*B(4));
+          C(p) = f{p}(y(1, k)+hh*B(1), y(2, k)+hh*B(2), y(3, k)+hh*B(3), y(4, k)+hh*B(4));
         end
 
         % Orde keempat
         for p = 1:4
-          D(p) = f{p}(y(1, k-1)+h*C(1), y(2, k-1)+h*C(2), y(3, k-1)+h*C(3), y(4, k-1)+h*C(4));
+          D(p) = f{p}(y(1, k)+h*C(1), y(2, k)+h*C(2), y(3, k)+h*C(3), y(4, k)+h*C(4));
         end
 
         % Update matriks iterasi ke-k
         for p = 1:4
-          y(p, k) = y(p, k-1) + (h/6)*(A(p) + 2*B(p) + 2*C(p) + D(p));
+          y(p, k+1) = y(p, k) + (h/6)*(A(p) + 2*B(p) + 2*C(p) + D(p));
         end
       end
       % END RUNGE-KUTTA METHOD
@@ -187,7 +187,7 @@ classdef PendulumIntegrator < handle
 
     function analytic(self)
       % BEGIN ANALYTIC METHOD
-      
+
       % END ANALYTIC METHOD
     end
 
