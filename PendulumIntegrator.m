@@ -156,7 +156,11 @@ classdef PendulumIntegrator < handle
       y(4, 1) = self.th_data(2, 1); % th2
 
       % BEGIN EULER METHOD
-
+      for k = 1:self.iterations-1
+        for p = 1:4
+          y(p, k+1) = y(p, k) + h*f{p}(y(1, k), y(2, k), y(3, k), y(4, k));
+        end
+      end
       % END EULER METHOD
 
       self.w_data = y(1:2, :); % w1 dan w2
@@ -179,7 +183,13 @@ classdef PendulumIntegrator < handle
       th(2, 1) = self.th_data(2, 1); % th2
       
       % BEGIN SYMPLECTIC EULER METHOD
+      for k = 1:self.iterations-1
+        w(1, k+1) = w(1, k) + h*f{1}(w(1, k), w(2, k), th(1, k), th(2, k));
+        w(2, k+1) = w(2, k) + h*f{2}(w(1, k), w(2, k), th(1, k), th(2, k));
 
+        th(1, k+1) = th(1, k) + h*f{3}(w(1, k+1), w(2, k+1), th(1, k), th(2, k));
+        th(2, k+1) = th(2, k) + h*f{4}(w(1, k+1), w(2, k+1), th(1, k), th(2, k));
+      end
       % END SYMPLECTIC EULER METHOD
 
       self.w_data = w; % w1 dan w2
